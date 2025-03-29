@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import SearchBar from "./SearchBar";
 import WeatherCard from "./WeatherCard";
 import "./style.css";
@@ -13,7 +13,7 @@ function App() {
     icon: "",
   });
 
-  const fetchWeatherByCoords = (latitude, longitude) => {
+  const fetchWeatherByCoords = useCallback((latitude, longitude) => {
     const apiKey = process.env.REACT_APP_WEATHER_API_KEY;
     if (!apiKey) {
       console.error(
@@ -50,9 +50,9 @@ function App() {
       .catch((error) => {
         console.error("Erro na chamada da API:", error);
       });
-  };
+  }, []);
 
-  const fetchWeatherByCity = (city) => {
+  const fetchWeatherByCity = useCallback((city) => {
     const apiKey = process.env.REACT_APP_WEATHER_API_KEY;
     if (!apiKey) {
       console.error(
@@ -89,7 +89,7 @@ function App() {
       .catch((error) => {
         console.error("Erro na chamada da API:", error);
       });
-  };
+  }, []);
 
   const updateTitleAndFavicon = (city, temperature, icon) => {
     // Atualiza o título da página
@@ -119,7 +119,7 @@ function App() {
       console.error("Geolocalização não é suportada pelo navegador.");
       fetchWeatherByCity("Fortaleza");
     }
-  }, []);
+  }, [fetchWeatherByCity, fetchWeatherByCoords]);
 
   return (
     <div className="weather-app-container">
