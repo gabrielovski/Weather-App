@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import { clear } from "@testing-library/user-event/dist/clear";
 
 /**
  * Componente de barra de pesquisa para buscar localizações
