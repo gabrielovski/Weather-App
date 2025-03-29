@@ -12,7 +12,7 @@ Este é um aplicativo simples para consultar o clima de diferentes localidades.
 1. Clone o repositório:
 
 ```bash
-git clone https://github.com/gabrielovski/weather-app.git
+git clone https://github.com/gabrielovski/Weather-App.git
 ```
 
 2. Instale as dependências:
@@ -21,7 +21,7 @@ git clone https://github.com/gabrielovski/weather-app.git
 npm install
 ```
 
-3. Crie um arquivo .env com sua chave de API:
+3. Crie um arquivo .env com sua chave de API da OpenWeather:
 
 ```bash
 REACT_APP_WEATHER_API_KEY=your_api_key_here
