@@ -4,16 +4,14 @@ import WeatherCard from "./WeatherCard";
 import "./style.css";
 
 function App() {
-  // Estado para armazenar os dados do clima
   const [weatherData, setWeatherData] = useState({
     city: "",
     temperature: "",
     humidity: "",
     windSpeed: "",
-    icon: "", // Novo campo para o código do ícone
+    icon: "",
   });
 
-  // Função para buscar o clima com base na localização
   const fetchWeatherByCoords = (latitude, longitude) => {
     const apiKey = process.env.REACT_APP_WEATHER_API_KEY;
     if (!apiKey) {
@@ -33,20 +31,26 @@ function App() {
         return response.json();
       })
       .then((data) => {
+        const weatherIcon = data.weather[0].icon;
+        const cityName = `${data.name}, ${data.sys.country}`;
+        const temperature = Math.round(data.main.temp);
+
         setWeatherData({
-          city: `${data.name}, ${data.sys.country}`,
-          temperature: Math.round(data.main.temp),
+          city: cityName,
+          temperature,
           humidity: data.main.humidity,
           windSpeed: (data.wind.speed * 3.6).toFixed(2),
-          icon: data.weather[0].icon, // Adicionando o código do ícone
+          icon: weatherIcon,
         });
+
+        // Atualiza o título e o favicon
+        updateTitleAndFavicon(cityName, temperature, weatherIcon);
       })
       .catch((error) => {
         console.error("Erro na chamada da API:", error);
       });
   };
 
-  // Função para buscar o clima com base no nome da cidade
   const fetchWeatherByCity = (city) => {
     const apiKey = process.env.REACT_APP_WEATHER_API_KEY;
     if (!apiKey) {
@@ -66,20 +70,37 @@ function App() {
         return response.json();
       })
       .then((data) => {
+        const weatherIcon = data.weather[0].icon;
+        const cityName = `${data.name}, ${data.sys.country}`;
+        const temperature = Math.round(data.main.temp);
+
         setWeatherData({
-          city: `${data.name}, ${data.sys.country}`,
-          temperature: Math.round(data.main.temp),
+          city: cityName,
+          temperature,
           humidity: data.main.humidity,
           windSpeed: (data.wind.speed * 3.6).toFixed(2),
-          icon: data.weather[0].icon, // Adicionando o código do ícone
+          icon: weatherIcon,
         });
+
+        // Atualiza o título e o favicon
+        updateTitleAndFavicon(cityName, temperature, weatherIcon);
       })
       .catch((error) => {
         console.error("Erro na chamada da API:", error);
       });
   };
 
-  // useEffect para solicitar a localização do usuário ao carregar o site
+  const updateTitleAndFavicon = (city, temperature, icon) => {
+    // Atualiza o título da página
+    document.title = `Clima em ${city} - ${temperature}°C | Weather App`;
+
+    // Atualiza o favicon
+    const favicon = document.querySelector("link[rel='icon']");
+    if (favicon) {
+      favicon.href = `https://openweathermap.org/img/wn/${icon}.png`;
+    }
+  };
+
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -89,29 +110,24 @@ function App() {
         },
         (error) => {
           console.error("Erro ao obter localização do usuário:", error);
-          // Caso o usuário não permita a localização, busca o clima de Fortaleza
           fetchWeatherByCity("Fortaleza");
         }
       );
     } else {
       console.error("Geolocalização não é suportada pelo navegador.");
-      // Caso a geolocalização não seja suportada, busca o clima de Fortaleza
       fetchWeatherByCity("Fortaleza");
     }
   }, []);
 
   return (
     <div className="weather-app-container">
-      {/* Componente de busca */}
       <SearchBar onSearch={fetchWeatherByCity} />
-
-      {/* Componente que exibe as informações do clima */}
       <WeatherCard
         city={weatherData.city}
         temperature={weatherData.temperature}
         humidity={weatherData.humidity}
         windSpeed={weatherData.windSpeed}
-        icon={weatherData.icon} // Passando o código do ícone para o WeatherCard
+        icon={weatherData.icon}
       />
     </div>
   );
