@@ -1,0 +1,145 @@
+/* Estilos base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #222222;
+  font-family: "Inder", sans-serif;
+}
+
+/* Componente de busca */
+#search {
+  width: 320px;
+  height: 35px;
+  display: flex;
+  background: #d9d9d9;
+  box-shadow: 0px 5px 7px rgba(0, 0, 0, 0.25);
+  border-radius: 12px;
+  margin: auto;
+  margin-top: 20vh;
+}
+
+#searchForm {
+  display: flex;
+  width: 97.5%;
+}
+
+#searchInput {
+  flex: auto;
+  border: none;
+  background: none;
+  padding: 0 10px;
+}
+
+#searchButton {
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+/* Card de clima */
+#card {
+  width: 320px;
+  background: #d9d9d9;
+  box-shadow: 0px 5px 7px rgba(0, 0, 0, 0.25);
+  border-radius: 12px;
+  margin: auto;
+  margin-top: 25px;
+  text-align: center;
+  padding: 15px;
+}
+
+#location-icon {
+  width: 16px;
+  height: 16px;
+  margin-bottom: 10px;
+}
+
+/* Adicione estas classes no seu CSS atual */
+
+.weather-app-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.location-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.temperature-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.weather-details {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+#sun-icon {
+  margin-bottom: 10px;
+}
+
+#card h2 {
+  font-size: 40px;
+  margin-bottom: 30px;
+}
+
+#card h4 {
+  margin-bottom: 20px;
+}
+
+/* Informações de umidade */
+#umidade-infos {
+  display: inline-flex;
+  justify-content: center;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+#umidade-infos p {
+  padding-left: 10px;
+  margin-right: 50px;
+  text-align: left;
+}
+
+/* Informações de vento */
+#wind-infos {
+  display: inline-flex;
+  justify-content: center;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+#wind-infos p {
+  padding-left: 10px;
+  text-align: left;
+}
+
+/* Classes extras para ícones */
+.img-infos {
+  width: 16px;
+  height: 16px;
+}
+
+/* Remove o outline dos elementos de input quando em foco */
+textarea:focus,
+input:focus {
+  outline: none;
+}
+
+#weather-icon {
+  width: 100px;
+  height: 100px;
+  margin-bottom: 10px;
+}
