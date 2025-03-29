@@ -92,12 +92,13 @@ function App() {
 
   const updateTitleAndFavicon = (city, temperature, icon) => {
     // Atualiza o título da página
-    document.title = `Clima em ${city} - ${temperature}°C | Weather App`;
+    document.title = `Clima em ${city} | ${temperature}°C`;
 
     // Atualiza o favicon
     const favicon = document.querySelector("link[rel='icon']");
     if (favicon) {
-      favicon.href = `https://openweathermap.org/img/wn/${icon}.png`;
+      // Adiciona um parâmetro único para evitar cache
+      favicon.href = `https://openweathermap.org/img/wn/${icon}.png?${new Date().getTime()}`;
     }
   };
 
