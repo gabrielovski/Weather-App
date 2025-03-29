@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import SearchBar from "./SearchBar";
 import WeatherCard from "./WeatherCard";
 import "./style.css";
+import { Analytics } from "@vercel/analytics/react";
 
 function App() {
   const [weatherData, setWeatherData] = useState({
@@ -130,6 +131,7 @@ function App() {
         windSpeed={weatherData.windSpeed}
         icon={weatherData.icon}
       />
+      <Analytics />
     </div>
   );
 }
