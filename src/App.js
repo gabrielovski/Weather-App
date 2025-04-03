@@ -2,16 +2,13 @@ import React, { useState, useEffect, useCallback } from "react";
 import SearchBar from "./SearchBar";
 import WeatherCard from "./WeatherCard";
 import { Analytics } from "@vercel/analytics/react";
-import "./style.css";
 
-// Constantes
 const DEFAULT_CITY = "Fortaleza";
-
 const initialWeatherState = {
   city: "",
-  temperature: "",
-  humidity: "",
-  windSpeed: "",
+  temperature: 0,
+  humidity: 0,
+  windSpeed: 0,
   icon: "",
 };
 
@@ -20,105 +17,65 @@ function App() {
   const apiKey = process.env.REACT_APP_WEATHER_API_KEY;
   const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
 
-  const handleApiError = (error) => {
-    console.error("Erro na chamada da API:", error);
-    // Aqui você poderia adicionar um estado para mostrar mensagens de erro ao usuário
-  };
+  const processWeatherData = useCallback((data) => {
+    const {
+      weather: [{ icon }],
+      main: { temp, humidity },
+      wind: { speed },
+      name,
+      sys: { country },
+    } = data;
 
-  const updateTitleAndFavicon = useCallback((city, temperature, icon) => {
-    document.title = `Clima em ${city} | ${temperature}°C`;
+    setWeatherData({
+      city: `${name}, ${country}`,
+      temperature: Math.round(temp),
+      humidity,
+      windSpeed: Math.round(speed * 3.6),
+      icon,
+    });
+
+    document.title = `Clima em ${name} | ${Math.round(temp)}°C`;
     const favicon = document.querySelector("link[rel='icon']");
-    if (favicon) {
-      favicon.href = `https://openweathermap.org/img/wn/${icon}.png?${Date.now()}`;
-    }
+    favicon?.setAttribute(
+      "href",
+      `https://openweathermap.org/img/wn/${icon}.png?${Date.now()}`
+    );
   }, []);
-
-  const processWeatherData = useCallback(
-    (data) => {
-      const weatherIcon = data.weather[0].icon;
-      const cityName = `${data.name}, ${data.sys.country}`;
-      const temperature = Math.round(data.main.temp);
-      const windSpeed = Math.round(data.wind.speed * 3.6);
-
-      const newWeatherData = {
-        city: cityName,
-        temperature,
-        humidity: data.main.humidity,
-        windSpeed,
-        icon: weatherIcon,
-      };
-
-      setWeatherData(newWeatherData);
-      updateTitleAndFavicon(cityName, temperature, weatherIcon);
-    },
-    [updateTitleAndFavicon]
-  );
 
   const fetchWeather = useCallback(
     async (params) => {
-      if (!apiKey) {
-        console.error(
-          "A chave da API não foi encontrada. Verifique o arquivo .env."
-        );
-        return;
-      }
+      if (!apiKey) return console.error("API key não encontrada");
 
       try {
-        const queryParams = new URLSearchParams({
-          ...params,
-          units: "metric",
-          appid: apiKey,
-          lang: "pt_br",
-        });
-
-        const response = await fetch(`${apiBaseUrl}?${queryParams}`);
-        if (!response.ok) throw new Error("Erro ao buscar dados do clima");
-
+        const response = await fetch(
+          `${apiBaseUrl}?${new URLSearchParams({
+            ...params,
+            units: "metric",
+            appid: apiKey,
+            lang: "pt_br",
+          })}`
+        );
+        if (!response.ok) throw new Error();
         const data = await response.json();
         processWeatherData(data);
-      } catch (error) {
-        handleApiError(error);
+      } catch {
+        console.error("Erro ao buscar dados do clima");
       }
     },
     [apiKey, apiBaseUrl, processWeatherData]
   );
 
-  const fetchWeatherByCity = useCallback(
-    (city) => {
-      fetchWeather({ q: city });
-    },
-    [fetchWeather]
-  );
-
-  const fetchWeatherByCoords = useCallback(
-    (latitude, longitude) => {
-      fetchWeather({ lat: latitude, lon: longitude });
-    },
-    [fetchWeather]
-  );
-
   useEffect(() => {
-    const handleSuccess = (position) => {
-      const { latitude, longitude } = position.coords;
-      fetchWeatherByCoords(latitude, longitude);
-    };
-
-    const handleError = (error) => {
-      console.error("Erro ao obter localização do usuário:", error);
-      fetchWeatherByCity(DEFAULT_CITY);
-    };
-
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(handleSuccess, handleError);
-    } else {
-      console.error("Geolocalização não é suportada pelo navegador.");
-      fetchWeatherByCity(DEFAULT_CITY);
-    }
-  }, [fetchWeatherByCity, fetchWeatherByCoords]);
+    navigator.geolocation?.getCurrentPosition(
+      ({ coords: { latitude, longitude } }) =>
+        fetchWeather({ lat: latitude, lon: longitude }),
+      () => fetchWeather({ q: DEFAULT_CITY })
+    );
+  }, [fetchWeather]);
 
   return (
     <div className="weather-app-container">
-      <SearchBar onSearch={fetchWeatherByCity} />
+      <SearchBar onSearch={(city) => fetchWeather({ q: city })} />
       <WeatherCard {...weatherData} />
       <Analytics />
     </div>

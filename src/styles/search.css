@@ -1,0 +1,27 @@
+#search {
+  width: var(--card-width);
+  height: 35px;
+  display: flex;
+  background: var(--card-bg);
+  box-shadow: var(--shadow);
+  border-radius: var(--border-radius);
+  margin: 20vh auto 0;
+}
+
+#searchForm {
+  display: flex;
+  width: 97.5%;
+}
+
+#searchInput {
+  flex: 1;
+  border: none;
+  background: none;
+  padding: 0 var(--spacing-sm);
+}
+
+#searchButton {
+  border: none;
+  background: none;
+  cursor: pointer;
+}

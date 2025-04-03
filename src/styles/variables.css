@@ -1,0 +1,10 @@
+:root {
+  --bg-color: #222222;
+  --card-bg: #d9d9d9;
+  --shadow: 0px 5px 7px rgba(0, 0, 0, 0.25);
+  --border-radius: 12px;
+  --card-width: 320px;
+  --spacing-sm: 10px;
+  --spacing-md: 20px;
+  --spacing-lg: 30px;
+}
