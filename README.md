@@ -38,5 +38,3 @@ REACT_APP_WEATHER_API_KEY=your_api_key_here
 - React
 - CSS
 - API de Clima
-
-Se precisar de ajuda para implementar alguma dessas melhorias, é só avisar!
