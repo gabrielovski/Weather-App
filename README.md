@@ -21,7 +21,7 @@ git clone https://github.com/gabrielovski/Weather-App.git
 npm install
 ```
 
-3. Crie um arquivo .env com sua chave de API da OpenWeather:
+3. Modifique o arquivo **.env.example** para **.env.local** e adicione suas variáveis da OpenWeather:
 
 ```bash
 REACT_APP_WEATHER_API_KEY=your_api_key_here
