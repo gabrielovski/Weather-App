@@ -45,7 +45,8 @@ const WeatherCard = ({ city, temperature, humidity, windSpeed, icon }) => {
             alt="Ícone de umidade"
           />
           <p className="infos" id="umidade">
-            {humidity}% <br />
+            {humidity}%
+            <br />
             Umidade
           </p>
         </div>
@@ -57,7 +58,8 @@ const WeatherCard = ({ city, temperature, humidity, windSpeed, icon }) => {
             alt="Ícone de vento"
           />
           <p className="infos-wind" id="wind-speed">
-            {windSpeed} km/h <br />
+            {windSpeed} km/h
+            <br />
             Vento
           </p>
         </div>
