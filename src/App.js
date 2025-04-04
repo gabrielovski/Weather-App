@@ -76,6 +76,10 @@ function App() {
         ?.setAttribute("href", `https://openweathermap.org/img/wn/${icon}.png`);
     } catch (err) {
       setError(true);
+      document.title = "Localização não encontrada | Weather App";
+      document
+        .querySelector("link[rel='icon']")
+        ?.setAttribute("href", "favicon.ico"); // ou o caminho do seu ícone padrão
     } finally {
       setIsLoading(false);
     }
