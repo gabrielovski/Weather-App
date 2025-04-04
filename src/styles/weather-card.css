@@ -8,6 +8,12 @@
   padding: var(--spacing-md);
   contain: content;
   will-change: transform;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+#card:hover {
+  transform: translateY(-2px);
 }
 
 /* Seção de localização */
@@ -53,22 +59,13 @@
 
 /* Container de informações secundárias */
 .secondary-info {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-lg);
-  text-align: center;
-}
-
-#feels-like,
-#temp-range {
-  font-size: 16px;
+  display: none; /* Removendo a seção de informações secundárias */
 }
 
 /* Grid de detalhes do clima */
 .weather-details {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, 1fr); /* Alterado para 2 colunas */
   gap: var(--spacing-md);
   margin-bottom: var(--spacing-md);
 }
@@ -77,18 +74,28 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  justify-content: center;
+  justify-content: flex-start; /* Mudado para flex-start */
+  padding: 0 var(--spacing-sm); /* Reduzido o padding */
+  width: 100%; /* Força ocupar todo o espaço */
 }
 
 .img-infos {
   width: 20px;
   height: 20px;
+  flex-shrink: 0; /* Impede que o ícone encolha */
+}
+
+.rain-icon {
+  width: 22px; /* Tamanho reduzido */
+  height: 22px;
 }
 
 .detail-text {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  flex: 1; /* Ocupa o espaço disponível */
+  min-width: 0; /* Permite que o texto quebre se necessário */
 }
 
 .detail-value {
@@ -97,8 +104,9 @@
 }
 
 .detail-label {
-  font-size: 14px;
+  font-size: 12px; /* Reduzido o tamanho do texto */
   color: #2c2c2c;
+  white-space: nowrap; /* Evita quebra do texto */
 }
 
 /* Seção nascer/pôr do sol */
@@ -119,4 +127,21 @@
 
 .sun-time-text {
   font-size: 14px;
+}
+
+/* Dica de mais informações */
+.more-info-hint {
+  text-align: center;
+  font-size: 12px;
+  color: #666;
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Timestamp de atualização */
+.update-time {
+  font-size: 12px;
+  color: #666;
+  margin-top: -5px;
 }

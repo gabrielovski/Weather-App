@@ -1,5 +1,6 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import PropTypes from "prop-types";
+import DetailsModal from "./DetailsModal";
 
 const formatTime = (timestamp) =>
   new Date(timestamp * 1000).toLocaleTimeString("pt-BR", {
@@ -19,7 +20,29 @@ const WeatherCard = ({
   tempMax,
   sunrise,
   sunset,
+  precipitation,
 }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const currentTime = useMemo(() => {
+    return new Date().toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }, []);
+
+  // Gerenciar scroll do body
+  useEffect(() => {
+    if (isModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isModalOpen]);
+
   const formattedTimes = useMemo(
     () => ({
       sunrise: formatTime(sunrise),
@@ -29,79 +52,88 @@ const WeatherCard = ({
   );
 
   return (
-    <div id="card">
-      <div className="location-container">
-        <img
-          src="assets/location-icon.svg"
-          id="location-icon"
-          alt="Ícone de localização"
-        />
-        <h4 id="city">{city}</h4>
-      </div>
-
-      <div className="temperature-container">
-        <img
-          src={`https://openweathermap.org/img/wn/${icon}@2x.png`}
-          id="weather-icon"
-          alt="Ícone do clima"
-          loading="lazy"
-        />
-        <h2 id="temperature">{temperature}°C</h2>
-        <p id="description">{description}</p>
-      </div>
-
-      <div className="secondary-info">
-        <p id="feels-like">Sensação térmica: {feelsLike}°C</p>
-        <p id="temp-range">
-          Min: {tempMin}°C / Máx: {tempMax}°C
-        </p>
-      </div>
-
-      <div className="weather-details">
-        <div className="weather-detail-item">
+    <>
+      <div id="card" onClick={() => setIsModalOpen(true)}>
+        <div className="location-container">
           <img
-            src="assets/water-icon.svg"
-            className="img-infos"
-            alt="Ícone de umidade"
+            src="assets/location-icon.svg"
+            id="location-icon"
+            alt="Ícone de localização"
           />
-          <div className="detail-text">
-            <span className="detail-value">{humidity}%</span>
-            <span className="detail-label">Umidade</span>
+          <h4 id="city">{city}</h4>
+          <span className="update-time">Atualizado às {currentTime}</span>
+        </div>
+
+        <div className="temperature-container">
+          <img
+            src={`https://openweathermap.org/img/wn/${icon}@2x.png`}
+            id="weather-icon"
+            alt="Ícone do clima"
+            loading="lazy"
+          />
+          <h2 id="temperature">{temperature}°C</h2>
+          <p id="description">{description}</p>
+        </div>
+
+        <div className="weather-details">
+          <div className="weather-detail-item">
+            <img
+              src="assets/rain-icon.svg"
+              className="img-infos rain-icon"
+              alt="Ícone de chuva"
+            />
+            <div className="detail-text">
+              <span className="detail-value">{precipitation.probability}%</span>
+              <span className="detail-label">Chance de chuva</span>
+            </div>
+          </div>
+
+          <div className="weather-detail-item">
+            <img
+              src="assets/wind-icon.svg"
+              className="img-infos"
+              alt="Ícone de vento"
+            />
+            <div className="detail-text">
+              <span className="detail-value">{windSpeed} km/h</span>
+              <span className="detail-label">Vento</span>
+            </div>
           </div>
         </div>
 
-        <div className="weather-detail-item">
-          <img
-            src="assets/wind-icon.svg"
-            className="img-infos"
-            alt="Ícone de vento"
-          />
-          <div className="detail-text">
-            <span className="detail-value">{windSpeed} km/h</span>
-            <span className="detail-label">Vento</span>
+        <div className="sun-times">
+          <div className="sun-time-item">
+            <img
+              src="assets/sunrise-icon.svg"
+              alt="Nascer do sol"
+              className="img-infos"
+            />
+            <span className="sun-time-text">{formattedTimes.sunrise}</span>
+          </div>
+          <div className="sun-time-item">
+            <img
+              src="assets/sunset-icon.svg"
+              alt="Pôr do sol"
+              className="img-infos"
+            />
+            <span className="sun-time-text">{formattedTimes.sunset}</span>
           </div>
         </div>
+        <div className="more-info-hint">Toque para mais informações</div>
       </div>
 
-      <div className="sun-times">
-        <div className="sun-time-item">
-          <img
-            src="assets/sunrise-icon.svg"
-            alt="Nascer do sol"
-            className="img-infos"
-          />
-          <span className="sun-time-text">{formattedTimes.sunrise}</span>
-        </div>
-        <div className="sun-time-item">
-          <img
-            src="assets/sunset-icon.svg"
-            alt="Pôr do sol"
-            className="img-infos"
-          />
-          <span className="sun-time-text">{formattedTimes.sunset}</span>
-        </div>
-      </div>
-    </div>
+      <DetailsModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        weatherDetails={{
+          feelsLike,
+          tempMin,
+          tempMax,
+          precipitation,
+          humidity,
+        }}
+      />
+    </>
   );
 };
 
@@ -117,6 +149,10 @@ WeatherCard.propTypes = {
   tempMax: PropTypes.number.isRequired,
   sunrise: PropTypes.number.isRequired,
   sunset: PropTypes.number.isRequired,
+  precipitation: PropTypes.shape({
+    probability: PropTypes.number.isRequired,
+    amount: PropTypes.number.isRequired,
+  }).isRequired,
 };
 
 export default React.memo(WeatherCard);

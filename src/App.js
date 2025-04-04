@@ -22,6 +22,10 @@ const INITIAL_WEATHER = {
   tempMax: 0,
   sunrise: 0,
   sunset: 0,
+  precipitation: {
+    probability: 0,
+    amount: 0,
+  },
 };
 
 function App() {
@@ -84,6 +88,10 @@ function App() {
           tempMax: Math.round(temp_max),
           sunrise,
           sunset,
+          precipitation: {
+            probability: Math.round((weather.rain?.["1h"] || 0) > 0 ? 100 : 0),
+            amount: Math.round((weather.rain?.["1h"] || 0) * 10) / 10,
+          },
         },
         hourlyForecast: forecast.list,
         error: false,
