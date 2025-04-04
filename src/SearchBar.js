@@ -1,16 +1,20 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import PropTypes from "prop-types";
 
 const SearchBar = ({ onSearch }) => {
   const [location, setLocation] = useState("");
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (location.trim()) {
-      onSearch(location);
-      setLocation("");
-    }
-  };
+  const handleSubmit = useCallback(
+    (e) => {
+      e.preventDefault();
+      const trimmedLocation = location.trim();
+      if (trimmedLocation) {
+        onSearch(trimmedLocation);
+        setLocation("");
+      }
+    },
+    [location, onSearch]
+  );
 
   return (
     <div id="search">
@@ -35,4 +39,4 @@ SearchBar.propTypes = {
   onSearch: PropTypes.func.isRequired,
 };
 
-export default SearchBar;
+export default React.memo(SearchBar);

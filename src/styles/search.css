@@ -5,7 +5,7 @@
   background: var(--card-bg);
   box-shadow: var(--shadow);
   border-radius: var(--border-radius);
-  margin: 20vh auto 0;
+  margin: 2vh auto 5px;
 }
 
 #searchForm {
