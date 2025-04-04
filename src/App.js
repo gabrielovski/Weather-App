@@ -38,7 +38,7 @@ function App() {
     hourlyForecast: [],
   });
 
-  const fetchData = useCallback(async (lat, lon) => {
+  const fetchData = useCallback(async (lat, lon, providedState = "") => {
     const apiKey = process.env.REACT_APP_WEATHER_API_KEY;
     const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
     if (!apiKey) return;
@@ -47,6 +47,19 @@ function App() {
     const signal = controller.signal;
 
     try {
+      // Primeiro, se não tiver estado fornecido, busca o estado via geocoding reverso
+      let state = providedState;
+      if (!state) {
+        const reverseGeocodingResponse = await fetch(
+          `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${apiKey}`,
+          { signal }
+        );
+        if (reverseGeocodingResponse.ok) {
+          const [locationData] = await reverseGeocodingResponse.json();
+          state = locationData.state || "";
+        }
+      }
+
       const [weatherData, forecastData] = await Promise.all([
         fetch(
           `${apiBaseUrl}?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}&lang=pt_br`,
@@ -76,7 +89,9 @@ function App() {
       setState((prev) => ({
         ...prev,
         weatherData: {
-          city: `${name}, ${country}`,
+          city: `${name}, ${state ? state + ", " : ""}${country}`
+            .replace(/\s+/g, " ")
+            .trim(),
           temperature: Math.round(temp),
           humidity,
           windSpeed: Math.round(speed * 3.6),
@@ -122,7 +137,7 @@ function App() {
         setState((prev) => ({ ...prev, error: false, isLoading: true }));
 
         const response = await fetch(
-          `${geocodingUrl}?q=${query}&limit=1&appid=${apiKey}`
+          `${geocodingUrl}?q=${query}&limit=5&appid=${apiKey}` // Aumentado o limite para 5
         );
 
         if (!response.ok) throw new Error();
@@ -131,8 +146,14 @@ function App() {
 
         if (data.length === 0) throw new Error();
 
-        const { lat, lon } = data[0];
-        await fetchData(lat, lon);
+        // Tenta encontrar uma correspondência mais precisa
+        const bestMatch =
+          data.find((location) =>
+            location.name.toLowerCase().includes(query.toLowerCase())
+          ) || data[0];
+
+        const { lat, lon, state } = bestMatch;
+        await fetchData(lat, lon, state);
       } catch (err) {
         setState((prev) => ({ ...prev, error: true, isLoading: false }));
         document.title = "Localização não encontrada | Weather App";
@@ -183,7 +204,7 @@ function App() {
   }, [fetchData, handleSearch, state.hasLoadedData]);
 
   return (
-    <div className="weather-app-container">
+    <div className="weather-app-container" style={{ paddingTop: "60px" }}>
       <SearchBar onSearch={handleSearch} />
       {state.isWaitingPermission ? (
         <LocationPrompt />

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import PropTypes from "prop-types";
 
 const SearchBar = ({ onSearch }) => {
@@ -7,6 +7,18 @@ const SearchBar = ({ onSearch }) => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const debounceTimer = useRef(null);
   const suggestionsCache = useRef({});
+  const searchRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const fetchSuggestions = useCallback(async (query) => {
     if (query.length < 3) {
@@ -76,7 +88,7 @@ const SearchBar = ({ onSearch }) => {
   );
 
   return (
-    <div id="search">
+    <div id="search" ref={searchRef}>
       <form id="searchForm" onSubmit={handleSubmit}>
         <input
           type="search"

@@ -29,7 +29,7 @@
 
 .suggestions-list {
   position: absolute;
-  top: calc(100% - var(--border-radius));
+  top: calc(110% - var(--border-radius));
   left: 0;
   right: 0;
   background: var(--card-bg);
