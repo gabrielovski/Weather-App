@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useCallback, Suspense, lazy } from "react";
-import SearchBar from "./SearchBar";
+import SearchBar from "./components/SearchBar";
 import { Analytics } from "@vercel/analytics/react";
-import LocationPrompt from "./LocationPrompt";
+import LocationPrompt from "./components/LocationPrompt";
 
-const WeatherCard = lazy(() => import("./WeatherCard"));
-const NotFoundCard = lazy(() => import("./NotFoundCard"));
+const WeatherCard = lazy(() => import("./components/WeatherCard"));
+const NotFoundCard = lazy(() => import("./components/NotFoundCard"));
+const HourlyForecastCard = lazy(() =>
+  import("./components/HourlyForecastCard")
+);
 
 const DEFAULT_CITY = "Fortaleza";
 const INITIAL_WEATHER = {
@@ -22,35 +25,41 @@ const INITIAL_WEATHER = {
 };
 
 function App() {
-  const [weatherData, setWeatherData] = useState(INITIAL_WEATHER);
-  const [error, setError] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasLoadedData, setHasLoadedData] = useState(false);
-  const [isWaitingPermission, setIsWaitingPermission] = useState(false);
+  const [state, setState] = useState({
+    weatherData: INITIAL_WEATHER,
+    error: false,
+    isLoading: true,
+    hasLoadedData: false,
+    isWaitingPermission: false,
+    hourlyForecast: [],
+  });
 
-  const fetchWeather = useCallback(async (params) => {
+  const fetchData = useCallback(async (lat, lon) => {
     const apiKey = process.env.REACT_APP_WEATHER_API_KEY;
     const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
-
     if (!apiKey) return;
 
+    const controller = new AbortController();
+    const signal = controller.signal;
+
     try {
-      setError(false);
-      setIsLoading(true);
+      const [weatherData, forecastData] = await Promise.all([
+        fetch(
+          `${apiBaseUrl}?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}&lang=pt_br`,
+          { signal }
+        ),
+        fetch(
+          `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}&lang=pt_br&cnt=8`,
+          { signal }
+        ),
+      ]);
 
-      const response = await fetch(
-        `${apiBaseUrl}?${new URLSearchParams({
-          ...params,
-          units: "metric",
-          appid: apiKey,
-          lang: "pt_br",
-        })}`,
-        { signal: AbortSignal.timeout(5000) }
-      );
+      if (!weatherData.ok || !forecastData.ok) throw new Error();
 
-      if (!response.ok) throw new Error();
-
-      const data = await response.json();
+      const [weather, forecast] = await Promise.all([
+        weatherData.json(),
+        forecastData.json(),
+      ]);
 
       const {
         weather: [{ icon, description }],
@@ -58,65 +67,99 @@ function App() {
         wind: { speed },
         name,
         sys: { country, sunrise, sunset },
-      } = data;
+      } = weather;
 
-      setWeatherData({
-        city: `${name}, ${country}`,
-        temperature: Math.round(temp),
-        humidity,
-        windSpeed: Math.round(speed * 3.6),
-        icon,
-        description: description.charAt(0).toUpperCase() + description.slice(1),
-        feelsLike: Math.round(feels_like),
-        tempMin: Math.round(temp_min),
-        tempMax: Math.round(temp_max),
-        sunrise,
-        sunset,
-      });
+      setState((prev) => ({
+        ...prev,
+        weatherData: {
+          city: `${name}, ${country}`,
+          temperature: Math.round(temp),
+          humidity,
+          windSpeed: Math.round(speed * 3.6),
+          icon,
+          description:
+            description.charAt(0).toUpperCase() + description.slice(1),
+          feelsLike: Math.round(feels_like),
+          tempMin: Math.round(temp_min),
+          tempMax: Math.round(temp_max),
+          sunrise,
+          sunset,
+        },
+        hourlyForecast: forecast.list,
+        error: false,
+        isLoading: false,
+        hasLoadedData: true,
+      }));
 
       document.title = `Clima em ${name} | ${Math.round(temp)}°C`;
       document
         .querySelector("link[rel='icon']")
         ?.setAttribute("href", `https://openweathermap.org/img/wn/${icon}.png`);
-      setHasLoadedData(true);
     } catch (err) {
-      setError(true);
-      document.title = "Localização não encontrada | Weather App";
-      document
-        .querySelector("link[rel='icon']")
-        ?.setAttribute("href", "favicon.ico"); // ou o caminho do seu ícone padrão
-    } finally {
-      setIsLoading(false);
+      if (!signal.aborted) {
+        setState((prev) => ({ ...prev, error: true, isLoading: false }));
+        document.title = "Localização não encontrada | Weather App";
+      }
     }
+
+    return () => controller.abort();
   }, []);
 
+  const handleSearch = useCallback(
+    async (query) => {
+      const apiKey = process.env.REACT_APP_WEATHER_API_KEY;
+      const geocodingUrl = process.env.REACT_APP_GEOCODING_API_URL;
+
+      try {
+        setState((prev) => ({ ...prev, error: false, isLoading: true }));
+
+        const response = await fetch(
+          `${geocodingUrl}?q=${query}&limit=1&appid=${apiKey}`
+        );
+
+        if (!response.ok) throw new Error();
+
+        const data = await response.json();
+
+        if (data.length === 0) throw new Error();
+
+        const { lat, lon } = data[0];
+        await fetchData(lat, lon);
+      } catch (err) {
+        setState((prev) => ({ ...prev, error: true, isLoading: false }));
+        document.title = "Localização não encontrada | Weather App";
+      }
+    },
+    [fetchData]
+  );
+
   useEffect(() => {
-    if (!hasLoadedData) {
+    if (!state.hasLoadedData) {
       let isMounted = true;
 
       if (navigator.geolocation) {
-        setIsWaitingPermission(true);
+        setState((prev) => ({ ...prev, isWaitingPermission: true }));
 
         const timeoutId = setTimeout(() => {
-          if (isMounted && !hasLoadedData) {
-            setIsWaitingPermission(false);
-            fetchWeather({ q: DEFAULT_CITY });
+          if (isMounted && !state.hasLoadedData) {
+            setState((prev) => ({ ...prev, isWaitingPermission: false }));
+            handleSearch(DEFAULT_CITY);
           }
         }, 5000);
 
         navigator.geolocation.getCurrentPosition(
           ({ coords: { latitude: lat, longitude: lon } }) => {
             if (isMounted) {
-              setIsWaitingPermission(false);
+              setState((prev) => ({ ...prev, isWaitingPermission: false }));
               clearTimeout(timeoutId);
-              fetchWeather({ lat, lon });
+              fetchData(lat, lon);
             }
           },
           () => {
-            if (isMounted && !hasLoadedData) {
-              setIsWaitingPermission(false);
+            if (isMounted && !state.hasLoadedData) {
+              setState((prev) => ({ ...prev, isWaitingPermission: false }));
               clearTimeout(timeoutId);
-              fetchWeather({ q: DEFAULT_CITY });
+              handleSearch(DEFAULT_CITY);
             }
           }
         );
@@ -126,22 +169,31 @@ function App() {
           clearTimeout(timeoutId);
         };
       } else {
-        fetchWeather({ q: DEFAULT_CITY });
+        handleSearch(DEFAULT_CITY);
       }
     }
-  }, [fetchWeather, hasLoadedData]);
+  }, [fetchData, handleSearch, state.hasLoadedData]);
 
   return (
     <div className="weather-app-container">
-      <SearchBar onSearch={(city) => fetchWeather({ q: city })} />
-      {isWaitingPermission ? (
+      <SearchBar onSearch={handleSearch} />
+      {state.isWaitingPermission ? (
         <LocationPrompt />
-      ) : isLoading ? (
+      ) : state.isLoading ? (
         <div style={{ color: "white" }}>Carregando...</div>
       ) : (
         <Suspense
           fallback={<div style={{ color: "white" }}>Carregando...</div>}>
-          {error ? <NotFoundCard /> : <WeatherCard {...weatherData} />}
+          {state.error ? (
+            <NotFoundCard />
+          ) : (
+            <>
+              <WeatherCard {...state.weatherData} />
+              {state.hourlyForecast.length > 0 && (
+                <HourlyForecastCard hourlyData={state.hourlyForecast} />
+              )}
+            </>
+          )}
         </Suspense>
       )}
       <Analytics />

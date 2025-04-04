@@ -1,5 +1,5 @@
 import React from "react";
-import "./styles/not-found-card.css";
+import "../styles/not-found-card.css";
 
 const NotFoundCard = () => {
   return (

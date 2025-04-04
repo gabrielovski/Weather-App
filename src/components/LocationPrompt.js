@@ -1,5 +1,5 @@
 import React from "react";
-import "./styles/location-prompt.css";
+import "../styles/location-prompt.css";
 
 const LocationPrompt = () => (
   <div className="location-prompt">

@@ -6,6 +6,7 @@
   box-shadow: var(--shadow);
   border-radius: var(--border-radius);
   margin: 2vh auto 5px;
+  position: relative;
 }
 
 #searchForm {
@@ -24,4 +25,59 @@
   border: none;
   background: none;
   cursor: pointer;
+}
+
+.suggestions-list {
+  position: absolute;
+  top: calc(100% - var(--border-radius));
+  left: 0;
+  right: 0;
+  background: var(--card-bg);
+  border-radius: 0 0 var(--border-radius) var(--border-radius);
+  box-shadow: var(--shadow);
+  max-height: 160px;
+  overflow-y: auto;
+  z-index: 1000;
+  padding-top: var(--border-radius);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+}
+
+.suggestions-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.suggestions-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.suggestions-list::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 3px;
+}
+
+.suggestion-item {
+  padding: var(--spacing-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.suggestion-item:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.suggestion-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.suggestion-city {
+  font-weight: 500;
+}
+
+.suggestion-country {
+  font-size: 0.8em;
+  color: #666;
 }
