@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import PropTypes from "prop-types";
 import DetailsModal from "./DetailsModal";
 
@@ -8,21 +8,9 @@ const formatTime = (timestamp) =>
     minute: "2-digit",
   });
 
-const WeatherCard = ({
-  city,
-  temperature,
-  humidity,
-  windSpeed,
-  icon,
-  description,
-  feelsLike,
-  tempMin,
-  tempMax,
-  sunrise,
-  sunset,
-  precipitation,
-}) => {
+const WeatherCard = ({ city, temperature, ...props }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+
   const currentTime = useMemo(() => {
     return new Date().toLocaleTimeString("pt-BR", {
       hour: "2-digit",
@@ -30,30 +18,22 @@ const WeatherCard = ({
     });
   }, []);
 
-  // Gerenciar scroll do body
-  useEffect(() => {
-    if (isModalOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [isModalOpen]);
-
   const formattedTimes = useMemo(
     () => ({
-      sunrise: formatTime(sunrise),
-      sunset: formatTime(sunset),
+      sunrise: formatTime(props.sunrise),
+      sunset: formatTime(props.sunset),
     }),
-    [sunrise, sunset]
+    [props.sunrise, props.sunset]
   );
+
+  const toggleModal = useCallback(() => {
+    setIsModalOpen((prev) => !prev);
+    document.body.style.overflow = !isModalOpen ? "hidden" : "unset";
+  }, [isModalOpen]);
 
   return (
     <>
-      <div id="card" onClick={() => setIsModalOpen(true)}>
+      <div id="card" onClick={toggleModal}>
         <div className="location-container">
           <img
             src="assets/location-icon.svg"
@@ -66,13 +46,13 @@ const WeatherCard = ({
 
         <div className="temperature-container">
           <img
-            src={`https://openweathermap.org/img/wn/${icon}@2x.png`}
+            src={`https://openweathermap.org/img/wn/${props.icon}@2x.png`}
             id="weather-icon"
             alt="Ícone do clima"
             loading="lazy"
           />
           <h2 id="temperature">{temperature}°C</h2>
-          <p id="description">{description}</p>
+          <p id="description">{props.description}</p>
         </div>
 
         <div className="weather-details">
@@ -83,7 +63,9 @@ const WeatherCard = ({
               alt="Ícone de chuva"
             />
             <div className="detail-text">
-              <span className="detail-value">{precipitation.probability}%</span>
+              <span className="detail-value">
+                {props.precipitation.probability}%
+              </span>
               <span className="detail-label">Chance de chuva</span>
             </div>
           </div>
@@ -95,7 +77,7 @@ const WeatherCard = ({
               alt="Ícone de vento"
             />
             <div className="detail-text">
-              <span className="detail-value">{windSpeed} km/h</span>
+              <span className="detail-value">{props.windSpeed} km/h</span>
               <span className="detail-label">Vento</span>
             </div>
           </div>
@@ -124,13 +106,13 @@ const WeatherCard = ({
 
       <DetailsModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={toggleModal}
         weatherDetails={{
-          feelsLike,
-          tempMin,
-          tempMax,
-          precipitation,
-          humidity,
+          feelsLike: props.feelsLike,
+          tempMin: props.tempMin,
+          tempMax: props.tempMax,
+          precipitation: props.precipitation,
+          humidity: props.humidity,
         }}
       />
     </>

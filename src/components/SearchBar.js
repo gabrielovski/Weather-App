@@ -1,4 +1,10 @@
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React, {
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+  useMemo,
+} from "react";
 import PropTypes from "prop-types";
 
 const SearchBar = ({ onSearch }) => {
@@ -51,18 +57,28 @@ const SearchBar = ({ onSearch }) => {
     }
   }, []);
 
-  const handleChange = (e) => {
-    const value = e.target.value;
-    setLocation(value);
+  const debouncedFetch = useMemo(() => {
+    let timeout;
+    return (query) => {
+      clearTimeout(timeout);
+      return new Promise((resolve) => {
+        timeout = setTimeout(() => resolve(fetchSuggestions(query)), 300);
+      });
+    };
+  }, [fetchSuggestions]);
 
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
-    }
-
-    debounceTimer.current = setTimeout(() => {
-      if (value) fetchSuggestions(value);
-    }, 300);
-  };
+  const handleChange = useCallback(
+    async (e) => {
+      const value = e.target.value;
+      setLocation(value);
+      if (value.length >= 3) {
+        await debouncedFetch(value);
+      } else {
+        setSuggestions([]);
+      }
+    },
+    [debouncedFetch]
+  );
 
   const handleSubmit = useCallback(
     (e) => {

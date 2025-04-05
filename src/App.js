@@ -1,4 +1,11 @@
-import React, { useState, useEffect, useCallback, Suspense, lazy } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  Suspense,
+  lazy,
+  useRef,
+} from "react";
 import SearchBar from "./components/SearchBar";
 import { Analytics } from "@vercel/analytics/react";
 import LocationPrompt from "./components/LocationPrompt";
@@ -38,16 +45,33 @@ function App() {
     hourlyForecast: [],
   });
 
+  const abortControllerRef = useRef();
+  const cacheRef = useRef(new Map());
+
   const fetchData = useCallback(async (lat, lon, providedState = "") => {
     const apiKey = process.env.REACT_APP_WEATHER_API_KEY;
     const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
     if (!apiKey) return;
 
-    const controller = new AbortController();
+    // Abort previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+
+    // Check cache
+    const cacheKey = `${lat},${lon}`;
+    const cachedData = cacheRef.current.get(cacheKey);
+    if (cachedData && Date.now() - cachedData.timestamp < 300000) {
+      // 5 min cache
+      setState((prev) => ({ ...prev, ...cachedData.data }));
+      return;
+    }
+
+    const controller = abortControllerRef.current;
     const signal = controller.signal;
 
     try {
-      // Primeiro, se não tiver estado fornecido, busca o estado via geocoding reverso
       let state = providedState;
       if (!state) {
         const reverseGeocodingResponse = await fetch(
@@ -78,6 +102,10 @@ function App() {
         forecastData.json(),
       ]);
 
+      const firstForecast = forecast.list[0];
+      const rainProbability = Math.round((firstForecast.pop || 0) * 100);
+      const rainAmount = (firstForecast.rain?.["3h"] || 0) / 3;
+
       const {
         weather: [{ icon, description }],
         main: { temp, humidity, feels_like, temp_min, temp_max },
@@ -86,10 +114,11 @@ function App() {
         sys: { country, sunrise, sunset },
       } = weather;
 
-      setState((prev) => ({
-        ...prev,
+      const cityName = weather.local_names?.pt || name;
+
+      const newState = {
         weatherData: {
-          city: `${name}, ${state ? state + ", " : ""}${country}`
+          city: `${cityName}, ${state ? state + ", " : ""}${country}`
             .replace(/\s+/g, " ")
             .trim(),
           temperature: Math.round(temp),
@@ -104,17 +133,24 @@ function App() {
           sunrise,
           sunset,
           precipitation: {
-            probability: Math.round((weather.rain?.["1h"] || 0) > 0 ? 100 : 0),
-            amount: Math.round((weather.rain?.["1h"] || 0) * 10) / 10,
+            probability: rainProbability,
+            amount: Math.round(rainAmount * 10) / 10,
           },
         },
         hourlyForecast: forecast.list,
         error: false,
         isLoading: false,
         hasLoadedData: true,
-      }));
+      };
 
-      document.title = `Clima em ${name} | ${Math.round(temp)}°C`;
+      cacheRef.current.set(cacheKey, {
+        timestamp: Date.now(),
+        data: newState,
+      });
+
+      setState((prev) => ({ ...prev, ...newState }));
+
+      document.title = `Clima em ${cityName} | ${Math.round(temp)}°C`;
       document
         .querySelector("link[rel='icon']")
         ?.setAttribute("href", `https://openweathermap.org/img/wn/${icon}.png`);
@@ -124,34 +160,26 @@ function App() {
         document.title = "Localização não encontrada | Weather App";
       }
     }
-
-    return () => controller.abort();
   }, []);
 
   const handleSearch = useCallback(
     async (query) => {
       const apiKey = process.env.REACT_APP_WEATHER_API_KEY;
       const geocodingUrl = process.env.REACT_APP_GEOCODING_API_URL;
-
       try {
         setState((prev) => ({ ...prev, error: false, isLoading: true }));
 
         const response = await fetch(
-          `${geocodingUrl}?q=${query}&limit=5&appid=${apiKey}` // Aumentado o limite para 5
+          `${geocodingUrl}?q=${query}&limit=5&appid=${apiKey}&lang=pt_br`
         );
-
         if (!response.ok) throw new Error();
-
         const data = await response.json();
-
         if (data.length === 0) throw new Error();
 
-        // Tenta encontrar uma correspondência mais precisa
         const bestMatch =
           data.find((location) =>
             location.name.toLowerCase().includes(query.toLowerCase())
           ) || data[0];
-
         const { lat, lon, state } = bestMatch;
         await fetchData(lat, lon, state);
       } catch (err) {
@@ -165,7 +193,6 @@ function App() {
   useEffect(() => {
     if (!state.hasLoadedData) {
       let isMounted = true;
-
       if (navigator.geolocation) {
         setState((prev) => ({ ...prev, isWaitingPermission: true }));
 
