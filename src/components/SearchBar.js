@@ -11,7 +11,6 @@ const SearchBar = ({ onSearch }) => {
   const [location, setLocation] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const debounceTimer = useRef(null);
   const suggestionsCache = useRef({});
   const searchRef = useRef(null);
 
